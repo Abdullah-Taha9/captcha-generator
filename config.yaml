@@ -1,0 +1,124 @@
+# CAPTCHA Generator Configuration
+
+# Basic generator settings
+width: 640
+height: 160
+charset: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+captcha_length_range: [3, 7]  # Min and max length for random captchas
+
+# Distractors to use in Part 4 (as specified in documentation)
+non_ascii_distractors: "*#?✓"
+
+# Font configuration
+font_paths:
+  # Uncomment and modify paths based on your system
+  # - "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+  # - "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf"
+  # - "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+  # - "/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf"
+
+# Background colors as RGB tuples
+background_colors:
+  - [255, 255, 255]  # White
+  - [240, 240, 240]  # Light gray
+  - [255, 248, 220]  # Cornsilk
+  - [245, 245, 220]  # Beige
+  - [230, 230, 250]  # Lavender
+
+  # Primary Colors
+  - [255, 0, 0]       # Red
+  - [0, 255, 0]       # Green
+  - [0, 0, 255]       # Blue
+
+  # Secondary Colors
+  - [255, 255, 0]     # Yellow
+  - [0, 255, 255]     # Cyan
+  - [255, 0, 255]     # Magenta
+
+  # Warm Tones
+  - [255, 228, 225]   # Misty Rose
+  - [255, 192, 203]   # Pink
+  - [255, 182, 193]   # Light Pink
+  - [255, 228, 196]   # Bisque
+  - [255, 222, 173]   # Navajo White
+
+  # Cool Tones
+  - [224, 255, 255]   # Light Cyan
+  - [240, 255, 255]   # Azure
+  - [240, 248, 255]   # Alice Blue
+  - [175, 238, 238]   # Pale Turquoise
+  - [173, 216, 230]   # Light Blue
+  - [135, 206, 235]   # Sky Blue
+  - [176, 224, 230]   # Powder Blue
+
+  # Soft Pastels
+  - [255, 250, 240]   # Floral White
+  - [248, 248, 255]   # Ghost White
+  - [255, 245, 238]   # Seashell
+  - [245, 255, 250]   # Mint Cream
+  - [255, 250, 250]   # Snow
+
+# Default captcha configuration (applies to all modes unless overridden)
+# captcha_config:
+#   mode: 'normal'
+#   rotation_range: [-15, 15]
+#   shear_range: [-0.2, 0.2]
+#   font_size_range: [40, 60]
+#   color_variation: true
+#   background_texture: false
+  
+#   # Part 3 degradations
+#   large_rotation_range: [-45, 45]
+#   line_distractors: 0
+#   noise_level: 0.0
+#   complex_background: false
+  
+#   # Part 4 degradations
+#   circular_distractors: 0
+#   non_ascii_distractors: 0
+#   challenging_fonts: false
+#   blur_level: 0.0
+#   character_overlap: false
+
+# Dataset generation settings
+dataset_generation:
+  train_samples: 10
+  val_samples: 5
+  test_samples: 5
+  output_dir: 'output'
+  save_annotations: true
+
+# Mode-specific configurations
+mode_configs:
+  part2:
+    mode: 'part2'
+    rotation_range: [-15, 15]
+    font_size_range: [40, 60]
+    color_variation: true
+    challenging_fonts: true
+    complex_background: false
+  
+  
+  part3:
+    mode: 'part3'
+    large_rotation_range: [-55, 55]
+    line_distractors: 2
+    noise_level: 0.12
+    complex_background: true
+    font_size_range: [35, 75]
+    challenging_fonts: true
+    color_variation: true
+  
+  part4:
+    mode: 'part4'
+    large_rotation_range: [-65, 65]
+    line_distractors: 3
+    circular_distractors: 1
+    non_ascii_distractors: 2
+    challenging_fonts: true
+    blur_level: 1.2
+    character_overlap: true
+    noise_level: 0.18
+    complex_background: true
+    font_size_range: [30, 80]
+    color_variation: true
