@@ -35,53 +35,61 @@ background_colors:
   - [0, 255, 255]     # Cyan
   - [255, 0, 255]     # Magenta
 
-  # Warm Tones
-  - [255, 228, 225]   # Misty Rose
-  - [255, 192, 203]   # Pink
-  - [255, 182, 193]   # Light Pink
-  - [255, 228, 196]   # Bisque
-  - [255, 222, 173]   # Navajo White
+  # # Warm Tones
+  # - [255, 228, 225]   # Misty Rose
+  # - [255, 192, 203]   # Pink
+  # - [255, 182, 193]   # Light Pink
+  # - [255, 228, 196]   # Bisque
+  # - [255, 222, 173]   # Navajo White
 
-  # Cool Tones
-  - [224, 255, 255]   # Light Cyan
-  - [240, 255, 255]   # Azure
-  - [240, 248, 255]   # Alice Blue
-  - [175, 238, 238]   # Pale Turquoise
-  - [173, 216, 230]   # Light Blue
-  - [135, 206, 235]   # Sky Blue
-  - [176, 224, 230]   # Powder Blue
+  # # Cool Tones
+  # - [224, 255, 255]   # Light Cyan
+  # - [240, 255, 255]   # Azure
+  # - [240, 248, 255]   # Alice Blue
+  # - [175, 238, 238]   # Pale Turquoise
+  # - [173, 216, 230]   # Light Blue
+  # - [135, 206, 235]   # Sky Blue
+  # - [176, 224, 230]   # Powder Blue
 
-  # Soft Pastels
-  - [255, 250, 240]   # Floral White
-  - [248, 248, 255]   # Ghost White
-  - [255, 245, 238]   # Seashell
-  - [245, 255, 250]   # Mint Cream
-  - [255, 250, 250]   # Snow
+  # # Soft Pastels
+  # - [255, 250, 240]   # Floral White
+  # - [248, 248, 255]   # Ghost White
+  # - [255, 245, 238]   # Seashell
+  # - [245, 255, 250]   # Mint Cream
+  # - [255, 250, 250]   # Snow
 
 # Default captcha configuration (applies to all modes unless overridden)
-# captcha_config:
-#   mode: 'normal'
-#   rotation_range: [-15, 15]
-#   shear_range: [-0.2, 0.2]
-#   font_size_range: [40, 60]
-#   color_variation: true
-#   background_texture: false
+captcha_config:
+  rotation_range: [-15, 15]
+  shear_range: [-0.2, 0.2]
+  font_size_range: [40, 60]
+  color_variation: true
+  background_texture: false
+  scale_distortion: false
+  perspective_distortion: false
+  character_outline: false
+  overlap_amount: 0.3
   
-#   # Part 3 degradations
-#   large_rotation_range: [-45, 45]
-#   line_distractors: 0
-#   noise_level: 0.0
-#   complex_background: false
+  # Degradation parameters
+  large_rotation_range: [-45, 45]
+  line_distractors: 0
+  line_width: 2
+  noise_level: 0.0
+  complex_background: false
+  # background_complexity: 0.5
   
-#   # Part 4 degradations
-#   circular_distractors: 0
-#   non_ascii_distractors: 0
-#   challenging_fonts: false
-#   blur_level: 0.0
-#   character_overlap: false
+  # Part 4 specific parameters
+  circular_distractors: 0
+  circle_radius: 20
+  circle_width: 2
+  non_ascii_distractors: 0
+  non_ascii_font_size: 40
+  challenging_fonts: false
+  blur_level: 0.0
+  character_overlap: false
 
 # Dataset generation settings
-dataset_generation:
+dataset_generation: # test with small number first (check directory, images, labels etc), then scale
   train_samples: 10
   val_samples: 5
   test_samples: 5
@@ -102,23 +110,26 @@ mode_configs:
   part3:
     mode: 'part3'
     large_rotation_range: [-55, 55]
-    line_distractors: 2
-    noise_level: 0.12
-    complex_background: true
     font_size_range: [35, 75]
-    challenging_fonts: true
     color_variation: true
+    challenging_fonts: true
+    complex_background: false
+    # background_complexity: 0.0  # Controls background complexity (0.0-1.0)
+    noise_level: 0.05
+    line_distractors: 2
   
   part4:
     mode: 'part4'
     large_rotation_range: [-65, 65]
-    line_distractors: 3
-    circular_distractors: 1
-    non_ascii_distractors: 2
-    challenging_fonts: true
-    blur_level: 1.2
-    character_overlap: true
-    noise_level: 0.18
-    complex_background: true
     font_size_range: [30, 80]
     color_variation: true
+    challenging_fonts: true
+    complex_background: true
+    # background_complexity: 0.7  # Controls background complexity (0.0-1.0)
+    noise_level: 0.18
+    line_distractors: 2
+    circular_distractors: 1
+    non_ascii_distractors: 1
+    non_ascii_font_size: 40
+    blur_level: 1.05
+    character_overlap: true
