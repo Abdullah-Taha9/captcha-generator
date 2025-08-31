@@ -4,6 +4,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import random
 import math
 import os
+import sys
 from typing import List, Tuple, Dict, Optional, Any
 import json
 import yaml
@@ -70,6 +71,15 @@ class CAPTCHAGenerator:
         config_fonts = self.config.get('font_paths', [])
         self.font_paths = config_fonts if config_fonts else (font_paths or self._get_default_fonts())
         
+        # Print font configuration summary
+        if self.font_paths:
+            print(f"\nCAPTCHA Generator initialized with {len(self.font_paths)} fonts:")
+            print(f"  - First few fonts: {', '.join([os.path.basename(f) for f in self.font_paths[:3]])}")
+            if len(self.font_paths) > 3:
+                print(f"  - ...and {len(self.font_paths) - 3} more")
+        else:
+            print("CAPTCHA Generator initialized with default font only (no custom fonts available)")
+        
         # Background colors from config, args, or defaults
         config_bg_colors = self.config.get('background_colors', [])
         if config_bg_colors:
@@ -77,56 +87,51 @@ class CAPTCHAGenerator:
             self.background_colors = [tuple(color) if isinstance(color, list) else color 
                                      for color in config_bg_colors]
         else:
-            self.background_colors = background_colors or [
-                (255, 255, 255),  # White
-                (240, 240, 240),  # Light gray
-                (255, 248, 220),  # Cornsilk
-                (245, 245, 220),  # Beige
-                (230, 230, 250),  # Lavender
-            ]
-        
+            # self.background_colors = background_colors or [
+            #     (255, 255, 255),  # White
+            #     (240, 240, 240),  # Light gray
+            #     (255, 248, 220),  # Cornsilk
+            #     (245, 245, 220),  # Beige
+            #     (230, 230, 250),  # Lavender
+            # ]
+            raise ValueError("No background colors detected")
+
     def _get_default_fonts(self) -> List[str]:
-        """Get diverse system fonts including decorative ones. Modify paths based on your system."""
+        """Get available DejaVu fonts which are known to be reliable on this system."""
+        
+        # Keep only DejaVu fonts which are reliable on the system
         possible_fonts = [
-            # Standard fonts
-            "/System/Library/Fonts/Arial.ttf",  # macOS
-            "/System/Library/Fonts/Helvetica.ttc",  # macOS
-            "/System/Library/Fonts/Times.ttc",  # macOS
-            "/System/Library/Fonts/Courier.ttc",  # macOS
-            "C:/Windows/Fonts/arial.ttf",  # Windows
-            "C:/Windows/Fonts/calibri.ttf",  # Windows
-            "C:/Windows/Fonts/times.ttf",  # Windows
-            "C:/Windows/Fonts/cour.ttf",  # Windows
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",  # Linux
-            "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",  # Linux
-            
-            # Decorative and stylized fonts
-            "/System/Library/Fonts/Impact.ttf",  # macOS
-            "/System/Library/Fonts/Chalkduster.ttc",  # macOS
-            "/System/Library/Fonts/Marker Felt.ttc",  # macOS
-            "/System/Library/Fonts/Papyrus.ttc",  # macOS
-            "/System/Library/Fonts/Brush Script.ttf",  # macOS
-            "C:/Windows/Fonts/impact.ttf",  # Windows
-            "C:/Windows/Fonts/comic.ttf",  # Windows Comic Sans
-            "C:/Windows/Fonts/BRADHITC.TTF",  # Windows Bradley Hand
-            "C:/Windows/Fonts/BRUSHSCI.TTF",  # Windows Brush Script
-            "C:/Windows/Fonts/FORTE.TTF",  # Windows Forte
-            "C:/Windows/Fonts/SNAP__.TTF",  # Windows Snap ITC
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",  # Linux Bold
-            "/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf",  # Linux Serif
-            
-            # Additional common decorative fonts (if available)
-            "C:/Windows/Fonts/STENCIL.TTF",
-            "C:/Windows/Fonts/SHOWG.TTF",
-            "C:/Windows/Fonts/JOKERMAN.TTF",
-            "C:/Windows/Fonts/CURLZ___.TTF",
-            "C:/Windows/Fonts/RAVIE.TTF",
+            # Linux DejaVu fonts (reliable on Linux systems)
+            "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/dejavu/DejaVuSans-BoldOblique.ttf",
+            "/usr/share/fonts/dejavu/DejaVuSansCondensed-Bold.ttf",
+            "/usr/share/fonts/dejavu/DejaVuSansCondensed-Oblique.ttf",
+            "/usr/share/fonts/dejavu/DejaVuSansMono-BoldOblique.ttf",
+            "/usr/share/fonts/dejavu/DejaVuSansMono-Bold.ttf",
+            "/usr/share/fonts/dejavu/DejaVuSansMono-Oblique.ttf",
+            "/usr/share/fonts/dejavu/DejaVuSansMono.ttf",
+            "/usr/share/fonts/dejavu/DejaVuSansCondensed.ttf",
+            "/usr/share/fonts/dejavu/DejaVuSansCondensed-BoldOblique.ttf",
+            "/usr/share/fonts/dejavu/DejaVuSans-ExtraLight.ttf",
+            "/usr/share/fonts/dejavu/DejaVuSans-Oblique.ttf",
+            "/usr/share/fonts/abattis-cantarell/Cantarell-Regular.otf",
+            "/usr/share/fonts/abattis-cantarell/Cantarell-Oblique.otf",
+            "/usr/share/fonts/abattis-cantarell/Cantarell-Bold.otf",
+            "/usr/share/fonts/abattis-cantarell/Cantarell-BoldOblique.otf",
+            "/usr/share/fonts/abattis-cantarell/Cantarell-Light.ttf",
+            "/usr/share/fonts/abattis-cantarell/Cantarell-LightItalic.ttf",
+            "/usr/share/fonts/abattis-cantarell/Cantarell-Medium.ttf",
         ]
         available_fonts = [font for font in possible_fonts if os.path.exists(font)]
         
-        # If no system fonts found, we'll use PIL's default and create synthetic variations
+        # If no DejaVu fonts found, we'll just use PIL's default font later
         if not available_fonts:
-            print("Warning: No system fonts found. Using default font with variations.")
+            print("Warning: No DejaVu fonts found. Will use PIL's default font.")
+        else:
+            print(f"Found {len(available_fonts)} DejaVu fonts:")
+            for font in available_fonts:
+                print(f"  - {os.path.basename(font)}")
         
         return available_fonts
     
@@ -145,36 +150,17 @@ class CAPTCHAGenerator:
         Returns:
             Tuple of (PIL Image, ground truth text, bounding boxes list)
         """
-        # Default configuration
-        default_config = {
-            'mode': 'normal',  # 'normal', 'part3', 'part4'
-            'rotation_range': (-15, 15),
-            'shear_range': (-0.2, 0.2),
-            'font_size_range': (40, 60),
-            'color_variation': True,
-            'background_texture': False,
-            
-            # Part 3 degradations
-            'large_rotation_range': (-45, 45),
-            'line_distractors': 0,
-            'noise_level': 0.0,
-            'complex_background': False,
-            
-            # Part 4 degradations
-            'circular_distractors': 0,
-            'non_ascii_distractors': 0,
-            'challenging_fonts': False,
-            'blur_level': 0.0,
-            'character_overlap': False,
-        }
+        # Get configuration from YAML - no default values, everything must be in the config.yaml
+        captcha_config = self.config.get('captcha_config', {})
         
-        # Apply configurations with priority: explicit config param > yaml config > defaults
-        captcha_config = default_config.copy()
-        
-        # Get config from YAML if it exists
-        yaml_captcha_config = self.config.get('captcha_config', {})
-        if yaml_captcha_config:
-            captcha_config.update(yaml_captcha_config)
+        # Get mode-specific config if applicable
+        mode = config.get('mode') if config else None
+        if mode and mode in self.config.get('mode_configs', {}):
+            mode_specific_config = self.config.get('mode_configs', {}).get(mode, {})
+            # Mode-specific config overrides base config
+            mode_config_copy = captcha_config.copy()
+            mode_config_copy.update(mode_specific_config)
+            captcha_config = mode_config_copy
         
         # Finally apply the explicit config parameter if provided
         if config:
@@ -189,7 +175,7 @@ class CAPTCHAGenerator:
             text = ''.join(random.choices(self.charset, k=captcha_length))
         
         # Create base image
-        if captcha_config['complex_background'] and captcha_config['mode'] in ['part3', 'part4']:
+        if captcha_config.get('complex_background') and captcha_config.get('mode') in ['part3', 'part4']:
             img = self._create_complex_background()
         else:
             bg_color = random.choice(self.background_colors)
@@ -221,6 +207,9 @@ class CAPTCHAGenerator:
         # Apply blur if specified
         if captcha_config['blur_level'] > 0:
             img = img.filter(ImageFilter.GaussianBlur(radius=captcha_config['blur_level']))
+        
+        # Print a summary of font usage for this CAPTCHA
+        # print(f"\nGenerated CAPTCHA with text: '{text}' using {len(bboxes)} characters")
         
         return img, text, bboxes
     
@@ -382,25 +371,57 @@ class CAPTCHAGenerator:
                        config: Dict, total_chars: int) -> Dict:
         """Draw a single character with enhanced distortions and decorative fonts."""
         
-        # Font selection strictly based on config
-        if config.get('challenging_fonts') and config['mode'] == 'part4':
-            # Use more decorative/challenging fonts for Part 4
-            font_path = random.choice(self.font_paths) if self.font_paths else None
-        else:
-            font_path = random.choice(self.font_paths) if self.font_paths else None
+        # Initialize font tracking if not already done
+        if not hasattr(self, '_last_used_fonts'):
+            self._last_used_fonts = []
+            self._synthetic_variations = []
         
-        # Font sizes strictly from config without additional variation
+        # Determine font type based on mode
+        if config.get('challenging_fonts') and config.get('mode') == 'part4':
+            font_type = "decorative"
+        else:
+            font_type = "standard"
+        
+        # Font sizes from config
         base_min, base_max = config['font_size_range']
         font_size = random.randint(base_min, base_max)
         
-        # Create font with potential synthetic effects
-        try:
-            if font_path:
+        # Font selection - prefer DejaVu fonts if available
+        font = None
+        font_path = None
+        
+        if self.font_paths:
+            # Simple rotation through available fonts
+            font_path = random.choice(self.font_paths)
+            try:
                 font = ImageFont.truetype(font_path, font_size)
-            else:
-                font = ImageFont.load_default()
-        except:
+                # print(f"Using {font_type} font: {os.path.basename(font_path)} (size: {font_size})")
+                
+                # Track usage
+                if len(self.font_paths) > 1:
+                    self._last_used_fonts.append(font_path)
+                    # Keep only the last 5 fonts in history
+                    self._last_used_fonts = self._last_used_fonts[-5:]
+            except Exception as e:
+                print(f"Error loading font {os.path.basename(font_path) if font_path else 'unknown'}: {e}")
+                font_path = None  # Reset if font loading failed
+        
+        # If no font loaded, use PIL's default with synthetic variations for diversity
+        if not font:
             font = ImageFont.load_default()
+            
+            # Create a synthetic variation for variety
+            variation_id = random.randint(0, 999)
+            variation_type = random.choice(["normal", "bold", "italic", "condensed"])
+            variation_key = f"{font_type}_{font_size}_{variation_type}_{variation_id}"
+            
+            if variation_key not in self._synthetic_variations:
+                self._synthetic_variations.append(variation_key)
+                if len(self._synthetic_variations) > 15:  # Keep more variations
+                    self._synthetic_variations.pop(0)
+            
+            # We'll simulate different font styles through rendering options later
+            # print(f"Using PIL default font (size: {font_size}, style: {variation_type}, id: {variation_id})")
         
         # Basic character positioning
         x_base = char_spacing * (char_index + 1)
@@ -412,19 +433,54 @@ class CAPTCHAGenerator:
         x = x_base + x_offset
         y = y_base + y_offset
         
-        # Rotation strictly based on config
-        if config['mode'] == 'part4' or config['mode'] == 'part3':
+        # Determine if this is a default font that needs extra variety
+        is_default_font = font_path is None
+        
+        # Set variation type for default fonts (will be used for color selection)
+        variation_type = "normal"
+        if is_default_font:
+            variation_type = random.choice(["normal", "bold", "italic", "condensed"])
+            
+        # Rotation based on config, with extra randomness for default fonts
+        if config.get('mode') == 'part4' or config.get('mode') == 'part3':
             # Use large_rotation_range from config
-            min_rot, max_rot = config.get('large_rotation_range', (-45, 45))
-            rotation = random.uniform(min_rot, max_rot)
+            large_rotation_range = config.get('large_rotation_range')
+            if large_rotation_range:
+                min_rot, max_rot = large_rotation_range
+                # Add more randomness for default fonts to create variety
+                if is_default_font:
+                    min_rot = min_rot * 1.2
+                    max_rot = max_rot * 1.2
+                rotation = random.uniform(min_rot, max_rot)
+            else:
+                rotation = 0 if not is_default_font else random.uniform(-30, 30)
         else:
             # Normal mode uses rotation_range from config
-            min_rot, max_rot = config.get('rotation_range', (-15, 15))
-            rotation = random.uniform(min_rot, max_rot)
+            rotation_range = config.get('rotation_range')
+            if rotation_range:
+                min_rot, max_rot = rotation_range
+                # Add more randomness for default fonts to create variety
+                if is_default_font:
+                    min_rot = min_rot * 1.2
+                    max_rot = max_rot * 1.2
+                rotation = random.uniform(min_rot, max_rot)
+            else:
+                rotation = 0 if not is_default_font else random.uniform(-20, 20)
         
-        # Enhanced character colors with more variety
-        if config['color_variation']:
-            color_style = random.choice(['dark', 'colored', 'high_contrast'])
+        # Character colors based on config and font type
+        if config.get('color_variation'):
+            # For default fonts, use more distinctive colors and styles
+            if is_default_font:
+                if variation_type == "bold":
+                    color_style = "high_contrast"
+                elif variation_type == "italic":
+                    color_style = "colored"
+                else:
+                    color_style = random.choice(['dark', 'colored', 'high_contrast'])
+            else:
+                color_style = random.choice(['dark', 'colored', 'high_contrast'])
+                
+            # Apply the selected color style
             if color_style == 'dark':
                 color = (
                     random.randint(0, 60),
@@ -432,19 +488,29 @@ class CAPTCHAGenerator:
                     random.randint(0, 60)
                 )
             elif color_style == 'colored':
-                # More vibrant colors
-                base_color = random.choice([
-                    (random.randint(100, 200), 0, 0),  # Red tones
-                    (0, random.randint(100, 200), 0),  # Green tones
-                    (0, 0, random.randint(100, 200)),  # Blue tones
-                    (random.randint(80, 150), random.randint(80, 150), 0),  # Yellow/brown
-                    (random.randint(80, 150), 0, random.randint(80, 150)),  # Purple
-                ])
+                # More vibrant colors for default fonts
+                if is_default_font:
+                    base_color = random.choice([
+                        (random.randint(50, 150), 0, 0),  # Red tones
+                        (0, random.randint(50, 150), 0),  # Green tones
+                        (0, 0, random.randint(50, 150)),  # Blue tones
+                        (random.randint(50, 120), random.randint(50, 120), 0),  # Yellow/brown
+                        (random.randint(50, 120), 0, random.randint(50, 120)),  # Purple
+                        (0, random.randint(50, 120), random.randint(50, 120)),  # Cyan
+                    ])
+                else:
+                    base_color = random.choice([
+                        (random.randint(100, 200), 0, 0),  # Red tones
+                        (0, random.randint(100, 200), 0),  # Green tones
+                        (0, 0, random.randint(100, 200)),  # Blue tones
+                        (random.randint(80, 150), random.randint(80, 150), 0),  # Yellow/brown
+                        (random.randint(80, 150), 0, random.randint(80, 150)),  # Purple
+                    ])
                 color = base_color
             else:  # high_contrast
                 color = (0, 0, 0)  # Pure black
         else:
-            color = (0, 0, 0)
+            color = (0, 0, 0)  # Default to black if color variation disabled
         
         # Get character dimensions for distortion calculations
         bbox = draw.textbbox((0, 0), char, font=font)
@@ -453,9 +519,10 @@ class CAPTCHAGenerator:
         
         # Character overlap based strictly on config
         if config.get('character_overlap') and char_index > 0:
-            # Fixed 30% overlap or use overlap_amount from config if provided
-            overlap_amount = config.get('overlap_amount', 0.3)
-            x -= int(char_width * overlap_amount)
+            # Use overlap_amount from config 
+            overlap_amount = config.get('overlap_amount')
+            if overlap_amount:
+                x -= int(char_width * overlap_amount)
         
         # Store original position for bounding box
         original_x = x
@@ -478,9 +545,11 @@ class CAPTCHAGenerator:
             char_img = char_img.rotate(rotation, expand=True)
         
         # 2. Shear distortion (based on config)
-        min_shear, max_shear = config.get('shear_range', (-0.2, 0.2))
-        shear_x = random.uniform(min_shear, max_shear)
-        shear_y = random.uniform(min_shear, max_shear)
+        shear_range = config.get('shear_range')
+        if shear_range:
+            min_shear, max_shear = shear_range
+            shear_x = random.uniform(min_shear, max_shear)
+            shear_y = random.uniform(min_shear, max_shear)
         char_img = self._apply_shear(char_img, shear_x, shear_y)
         
         # 3. Scale distortion (if enabled in config)
@@ -608,9 +677,9 @@ class CAPTCHAGenerator:
     
     def _apply_part3_degradations(self, img: Image.Image, draw: ImageDraw.Draw, config: Dict) -> Image.Image:
         """Apply Part 3 specific degradations."""
-        # Line distractors - use exact number from config
-        line_count = config.get('line_distractors', 0)
-        line_width = config.get('line_width', 2)
+        # Line distractors from config
+        line_count = config.get('line_distractors', 0)  # Default to 0 for safety
+        line_width = config.get('line_width')
         
         for _ in range(line_count):
             x1 = random.randint(0, self.width)
@@ -619,29 +688,33 @@ class CAPTCHAGenerator:
             y2 = random.randint(0, self.height)
             # Use a consistent color instead of random
             color = (100, 100, 100)
-            draw.line([(x1, y1), (x2, y2)], fill=color, width=line_width)
+            # Use line_width if specified, otherwise default to 1
+            width = line_width if line_width is not None else 1
+            draw.line([(x1, y1), (x2, y2)], fill=color, width=width)
         
         return img
     
     def _apply_part4_degradations(self, img: Image.Image, draw: ImageDraw.Draw, 
                                  config: Dict, text: str) -> Image.Image:
         """Apply Part 4 specific degradations."""
-        # Circular distractors - use exact number from config
-        circle_count = config.get('circular_distractors', 0)
-        circle_width = config.get('circle_width', 2)
+        # Circular distractors from config
+        circle_count = config.get('circular_distractors', 0)  # Default to 0 for safety
+        circle_width = config.get('circle_width')
+        circle_radius = config.get('circle_radius')
         
         for _ in range(circle_count):
             x = random.randint(50, self.width - 50)
             y = random.randint(50, self.height - 50)
-            radius = config.get('circle_radius', 20)
+            radius = circle_radius if circle_radius is not None else 15
             # Use a consistent color instead of random
             color = (100, 100, 100)
+            width = circle_width if circle_width is not None else 1
             draw.ellipse([x - radius, y - radius, x + radius, y + radius], 
-                        outline=color, width=circle_width)
+                        outline=color, width=width)
         
-        # Non-ASCII character distractors - use exact number from config
-        non_ascii_count = config.get('non_ascii_distractors', 0)
-        non_ascii_font_size = config.get('non_ascii_font_size', 40)
+        # Non-ASCII character distractors from config
+        non_ascii_count = config.get('non_ascii_distractors', 0)  # Default to 0 for safety
+        non_ascii_font_size = config.get('non_ascii_font_size')
         
         for _ in range(non_ascii_count):
             distractor_char = random.choice(self.non_ascii_distractors)
@@ -649,12 +722,17 @@ class CAPTCHAGenerator:
             y = random.randint(0, self.height - 50)
             # Use a consistent color instead of random
             color = (100, 100, 100)
+            # Use font size from config or default to reasonable size
+            font_size = non_ascii_font_size if non_ascii_font_size is not None else 30
             
             try:
                 if self.font_paths:
-                    font = ImageFont.truetype(self.font_paths[0], non_ascii_font_size)
+                    font_path = self.font_paths[0]
+                    font = ImageFont.truetype(font_path, font_size)
+                    # print(f"Using font for non-ASCII distractor: {os.path.basename(font_path)} (size: {font_size})")
                 else:
                     font = ImageFont.load_default()
+                    # print(f"Using default font for non-ASCII distractor (size: {font_size})")
                 draw.text((x, y), distractor_char, font=font, fill=color)
             except:
                 pass  # Skip if font doesn't support the character
@@ -703,42 +781,10 @@ class CAPTCHAGenerator:
         # Enhanced mode-specific configurations with more challenging distortions
         mode_configs = self.config.get('mode_configs', {})
         
-        # If no mode configs in YAML, use these defaults
+        # Mode configs must be defined in the config.yaml file
         if not mode_configs:
-            mode_configs = {
-                'normal': {
-                    'mode': 'normal',
-                    'rotation_range': (-25, 25),  # Increased rotation for normal mode
-                    'font_size_range': (40, 70),  # Wider font size range
-                    'color_variation': True,
-                    'challenging_fonts': True,
-                    'complex_background': False,
-                },
-                'part3': {
-                    'mode': 'part3',
-                    'large_rotation_range': (-55, 55),  # More extreme rotations
-                    'line_distractors': 2,  # Will be randomized per sample
-                    'noise_level': 0.12,  # Will be randomized per sample
-                    'complex_background': True,
-                    'font_size_range': (35, 75),  # Wider range for more diversity
-                    'challenging_fonts': True,  # Use decorative fonts even in part3
-                    'color_variation': True,
-                },
-                'part4': {
-                    'mode': 'part4',
-                    'large_rotation_range': (-65, 65),  # Even more extreme rotations
-                    'line_distractors': 3,  # Will be randomized per sample
-                    'circular_distractors': 1,  # Will be randomized per sample
-                    'non_ascii_distractors': 2,  # Will be randomized per sample
-                    'challenging_fonts': True,
-                    'blur_level': 1.2,  # Will be randomized per sample
-                    'character_overlap': True,  # Will be randomized per sample
-                    'noise_level': 0.18,  # Will be randomized per sample
-                    'complex_background': True,
-                    'font_size_range': (30, 80),  # Widest range for maximum challenge
-                    'color_variation': True,
-                }
-        }
+            print("Warning: No mode configurations found in the config file. Please define them in config.yaml.")
+            mode_configs = {}
         
         config = mode_configs.get(mode, {})
         if custom_config:
@@ -813,12 +859,12 @@ class CAPTCHAGenerator:
         with open(summary_file, 'w') as f:
             json.dump(summary, f, indent=2)
         
-        print(f"\nDataset generation complete!")
-        print(f"Mode: {mode}")
-        print(f"Samples: {num_samples}")
-        print(f"Resolution: {self.width}x{self.height}")
-        print(f"Average CAPTCHA length: {summary['avg_length']:.1f}")
-        print(f"Files saved to: {output_dir}")
+        # print(f"\nDataset generation complete!")
+        # print(f"Mode: {mode}")
+        # print(f"Samples: {num_samples}")
+        # print(f"Resolution: {self.width}x{self.height}")
+        # print(f"Average CAPTCHA length: {summary['avg_length']:.1f}")
+        # print(f"Files saved to: {output_dir}")
         
         return dataset_metadata
     
@@ -866,8 +912,8 @@ class CAPTCHAGenerator:
                 if os.path.exists(old_path):
                     shutil.copy2(old_path, new_path)
                     # Print success for the first few files to confirm it's working
-                    if i < 3:  
-                        print(f"Copied: {old_path} -> {new_path}")
+                    # if i < 3:  
+                        # print(f"Copied: {old_path} -> {new_path}")
                 else:
                     print(f"Warning: Source image not found at {old_path}")
             except Exception as e:
@@ -957,11 +1003,11 @@ class CAPTCHAGenerator:
         with open(labels_file, 'w') as f:
             json.dump(labels_data, f, indent=2)
         
-        print(f"\nExported to original format:")
-        print(f"- Directory: {part}/{mode}/")
-        print(f"- Images: {images_dir}")
-        print(f"- Labels: {os.path.join(mode_dir, 'labels.json')}")
-        print(f"- Total samples: {len(dataset_metadata)}")
+        # print(f"\nExported to original format:")
+        # print(f"- Directory: {part}/{mode}/")
+        # print(f"- Images: {images_dir}")
+        # print(f"- Labels: {os.path.join(mode_dir, 'labels.json')}")
+        # print(f"- Total samples: {len(dataset_metadata)}")
 
 # Example usage and configuration presets
 if __name__ == "__main__":
@@ -969,7 +1015,8 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description='CAPTCHA Generator with YAML config support')
     parser.add_argument('--config', type=str, default='config.yaml', help='Path to YAML config file')
-    parser.add_argument('--part', type=str, default='part2', choices=['part2', 'part3', 'part4'], help='Part number')
+    parser.add_argument('--part', type=str, nargs='+', default=['part2'], 
+                      help='Part number(s) to generate. Multiple parts can be specified, e.g. --part part2 part3 part4')
     parser.add_argument('--train_samples', type=int, help='Override number of training samples from config')
     parser.add_argument('--val_samples', type=int, help='Override number of validation samples from config')
     parser.add_argument('--test_samples', type=int, help='Override number of test samples from config')
@@ -979,9 +1026,6 @@ if __name__ == "__main__":
     # Initialize generator with config file
     generator = CAPTCHAGenerator(config_path=args.config)
 
-    # Set mode based on part
-    mode = args.part
-    
     # Get configuration from YAML file
     dataset_config = generator.config.get('dataset_generation', {})
     
@@ -991,68 +1035,82 @@ if __name__ == "__main__":
     test_samples = args.test_samples if args.test_samples is not None else dataset_config.get('test_samples', 20)
     base_dir = args.output_dir if args.output_dir is not None else dataset_config.get('output_dir', 'output')
     
-    # Create all three splits
-    print(f"Generating {mode} dataset...")
+    # Validate parts
+    valid_parts = ['part2', 'part3', 'part4']
+    parts_to_generate = [part for part in args.part if part in valid_parts]
+    if not parts_to_generate:
+        print(f"Error: No valid parts specified. Valid parts are: {', '.join(valid_parts)}")
+        sys.exit(1)
+    
+    # Process each part
     print(f"Using configuration from: {args.config}")
     print(f"Samples: train={train_samples}, val={val_samples}, test={test_samples}")
+    print(f"Generating datasets for: {', '.join(parts_to_generate)}")
     
-    # Generate training set
-    if train_samples > 0:
-        print(f"Generating training set ({train_samples} samples)...")
-        train_data = generator.generate_dataset(
-            num_samples=train_samples,
-            mode=mode,
-            output_dir=os.path.join(base_dir, 'temp_train')
-        )
-        generator.export_to_original_format(
-            train_data,
-            output_dir=base_dir,
-            part=mode,
-            mode='train'
-        )
-    
-    # Generate validation set
-    if val_samples > 0:
-        print(f"Generating validation set ({val_samples} samples)...")
-        val_data = generator.generate_dataset(
-            num_samples=val_samples,
-            mode=mode,
-            output_dir=os.path.join(base_dir, 'temp_val')
-        )
-        generator.export_to_original_format(
-            val_data,
-            output_dir=base_dir,
-            part=mode,
-            mode='val'
-        )
-    
-    # Generate test set
-    if test_samples > 0:
-        print(f"Generating test set ({test_samples} samples)...")
-        test_data = generator.generate_dataset(
-            num_samples=test_samples,
-            mode=mode,
-            output_dir=os.path.join(base_dir, 'temp_test')
-        )
-        generator.export_to_original_format(
-            test_data,
-            output_dir=base_dir,
-            part=mode,
-            mode='test'
-        )
+    for part in parts_to_generate:
+        print(f"\n{'='*50}")
+        print(f"Generating {part} dataset...")
+        print(f"{'='*50}")
         
-    # Clean up temporary directories
-    import shutil
+        # Generate training set
+        if train_samples > 0:
+            print(f"Generating {part} training set ({train_samples} samples)...")
+            train_data = generator.generate_dataset(
+                num_samples=train_samples,
+                mode=part,
+                output_dir=os.path.join(base_dir, f'temp_{part}_train')
+            )
+            generator.export_to_original_format(
+                train_data,
+                output_dir=base_dir,
+                part=part,
+                mode='train'
+            )
+        
+        # Generate validation set
+        if val_samples > 0:
+            print(f"Generating {part} validation set ({val_samples} samples)...")
+            val_data = generator.generate_dataset(
+                num_samples=val_samples,
+                mode=part,
+                output_dir=os.path.join(base_dir, f'temp_{part}_val')
+            )
+            generator.export_to_original_format(
+                val_data,
+                output_dir=base_dir,
+                part=part,
+                mode='val'
+            )
+        
+        # Generate test set
+        if test_samples > 0:
+            print(f"Generating {part} test set ({test_samples} samples)...")
+            test_data = generator.generate_dataset(
+                num_samples=test_samples,
+                mode=part,
+                output_dir=os.path.join(base_dir, f'temp_{part}_test')
+            )
+            generator.export_to_original_format(
+                test_data,
+                output_dir=base_dir,
+                part=part,
+                mode='test'
+            )
+            
+        # Clean up temporary directories for this part
+        import shutil
+        
+        temp_dirs = [
+            os.path.join(base_dir, f'temp_{part}_train'),
+            os.path.join(base_dir, f'temp_{part}_val'),
+            os.path.join(base_dir, f'temp_{part}_test')
+        ]
+        
+        for temp_dir in temp_dirs:
+            if os.path.exists(temp_dir):
+                shutil.rmtree(temp_dir)
+                # print(f"Cleaned up temporary directory: {temp_dir}")
+        
+        print(f"Dataset generation for {part} complete! Files saved to: {base_dir}/{part}/")
     
-    temp_dirs = [
-        os.path.join(base_dir, 'temp_train'),
-        os.path.join(base_dir, 'temp_val'),
-        os.path.join(base_dir, 'temp_test')
-    ]
-    
-    for temp_dir in temp_dirs:
-        if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir)
-            print(f"Cleaned up temporary directory: {temp_dir}")
-    
-    print(f"\nDataset generation complete! Files saved to: {base_dir}/{mode}/")
+    print(f"\nAll datasets generated successfully!")
